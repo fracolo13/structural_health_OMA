@@ -1,0 +1,72 @@
+# Requirements
+
+## Core Dependencies
+
+```
+numpy>=1.20.0
+pandas>=1.3.0
+scipy>=1.7.0
+matplotlib>=3.4.0
+scikit-learn>=1.0.0
+PyYAML>=5.4.0
+```
+
+## OMA Analysis Dependencies
+
+```
+pyoma2>=1.0.0
+```
+
+## Optional Dependencies
+
+### Enhanced Plotting
+```
+seaborn>=0.11.0
+plotly>=5.0.0
+```
+
+### Parallel Processing  
+```
+joblib>=1.0.0
+```
+
+### Development Dependencies
+```
+pytest>=6.0.0
+pytest-cov>=2.12.0
+black>=21.0.0
+flake8>=3.9.0
+mypy>=0.910
+```
+
+## Installation Commands
+
+### Minimal Installation
+```bash
+pip install numpy pandas scipy matplotlib scikit-learn PyYAML pyoma2
+```
+
+### Full Installation  
+```bash
+pip install numpy pandas scipy matplotlib scikit-learn PyYAML pyoma2 seaborn plotly joblib
+```
+
+### Development Installation
+```bash
+pip install -r requirements-dev.txt
+```
+
+## Platform-Specific Notes
+
+### Windows
+- Ensure Visual Studio Build Tools are installed for compiling dependencies
+- Use Anaconda/Miniconda for easier dependency management
+
+### macOS  
+- Xcode Command Line Tools may be required
+- Consider using Homebrew for system dependencies
+
+### Linux
+- Development headers for BLAS/LAPACK may be needed
+- Ubuntu/Debian: `sudo apt-get install python3-dev libblas-dev liblapack-dev`
+- CentOS/RHEL: `sudo yum install python3-devel blas-devel lapack-devel`

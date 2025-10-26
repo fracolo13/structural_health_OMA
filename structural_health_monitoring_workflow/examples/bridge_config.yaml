@@ -1,0 +1,186 @@
+# Example Configuration for Bridge Monitoring
+
+# This example shows a configuration for a 6-sensor bridge monitoring setup
+# with 3 sensors on each side of the bridge deck
+
+# Project Information
+project:
+  name: "bridge_monitoring_example"
+  description: "6-sensor bridge monitoring configuration"
+  version: "1.0.0"
+
+# File Paths Configuration
+paths:
+  input_data_dir: "data/raw"
+  filtered_data_dir: "data/filtered"
+  processed_data_dir: "data/processed"  
+  analysis_output_dir: "results"
+  use_relative_paths: true
+
+# Data Quality Control Parameters
+quality_control:
+  # Amplitude thresholds for channel filtering (adjust for your sensors)
+  mean_threshold:
+    lower: -1.1
+    upper: -0.9
+  
+  # Quality control bounds (should match your sensor characteristics)
+  amplitude_bounds:
+    lower: -1.1
+    upper: -0.9
+  
+  # Required channels - customize for your sensor layout
+  required_channels: ['sensor_1', 'sensor_2', 'sensor_3', 'sensor_4']
+  
+  # Data cleaning parameters
+  cleaning:
+    min_shift_duration: 10      # Minimum samples for systematic shift
+    max_peak_duration: 5        # Maximum samples for signal peak
+    edge_buffer_ratio: 0.25     # Fraction for edge detection
+    drift_threshold: 0.01       # Slope threshold for drift
+  
+  # Window-based validation
+  validation:
+    window_size: '10S'          # Time window for quality check
+    quality_threshold: 80       # Minimum valid window percentage
+
+# Signal Processing Parameters  
+signal_processing:
+  sampling_frequency: 250       # Hz - adjust for your setup
+  
+  # Filter settings
+  filters:
+    highpass:
+      cutoff: 25               # Hz - removes low frequency noise
+      order: 4
+    
+    bandpass:
+      lowcut: 40               # Hz - lower frequency bound
+      highcut: 70              # Hz - upper frequency bound
+      order: 4
+
+# Operational Modal Analysis Settings
+oma:
+  settings:
+    fs: 250                    # Sampling frequency (must match signal_processing)
+    decimation_order: 1        # Data decimation factor
+    min_percentage_mode_occurence: 0.2  # Minimum mode detection percentage
+    
+    # SSI-COV Algorithm settings
+    ssicov:
+      name: "SSIcov"
+      method: "cov"            # Covariance method
+      br: 100                  # Block rows
+      ordmax: 100              # Maximum model order
+      orderin: 40              # Minimum model order
+    
+    # Optional: FSDD Algorithm settings
+    fsdd:
+      name: "FSDD"
+      nxseg: 1024
+      method_SD: "cor"
+      pov: 0.5
+      maclim: 0.85
+
+  # Sensor geometry - CUSTOMIZE FOR YOUR BRIDGE
+  geometry:
+    # Sensor names (match your data columns)
+    sensor_names: ['sensor_1', 'sensor_2', 'sensor_3', 'sensor_4', 'sensor_5', 'sensor_6']
+    
+    # Sensor coordinates [x, y, z] in meters
+    # Example: 6 sensors along bridge deck, 3 on each side
+    sensor_coordinates:
+      - [0.0, -2.0, 0.0]       # Sensor 1: Start, left side
+      - [25.0, -2.0, 0.0]      # Sensor 2: Mid, left side  
+      - [50.0, -2.0, 0.0]      # Sensor 3: End, left side
+      - [0.0, 2.0, 0.0]        # Sensor 4: Start, right side
+      - [25.0, 2.0, 0.0]       # Sensor 5: Mid, right side
+      - [50.0, 2.0, 0.0]       # Sensor 6: End, right side
+    
+    # Sensor directions [x, y, z] (unit vectors)
+    # All measure vertical acceleration
+    sensor_directions:
+      - [0, 0, 1]              # Vertical
+      - [0, 0, 1]              # Vertical
+      - [0, 0, 1]              # Vertical
+      - [0, 0, 1]              # Vertical
+      - [0, 0, 1]              # Vertical
+      - [0, 0, 1]              # Vertical
+    
+    # Background geometry for visualization (bridge deck outline)
+    bg_nodes:
+      - [-2.0, -3.0, 0]        # Corner 1
+      - [-2.0, 3.0, 0]         # Corner 2
+      - [52.0, 3.0, 0]         # Corner 3
+      - [52.0, -3.0, 0]        # Corner 4
+    
+    # Lines connecting background nodes
+    bg_lines:
+      - [1, 2]                 # Side 1
+      - [2, 3]                 # Side 2
+      - [3, 4]                 # Side 3  
+      - [4, 1]                 # Side 4
+
+# Modal Analysis Parameters
+modal_analysis:
+  # MAC threshold for mode quality
+  mac_threshold: 0.6
+  
+  # Maximum outliers to analyze in detail
+  max_outliers_to_analyze: 10
+  
+  # Outlier detection method configurations
+  outlier_detection:
+    # Method 1: Standard deviation based
+    std_dev:
+      threshold: 2.0           # Standard deviations
+    
+    # Method 2: Curve fitting with confidence intervals
+    curve_fitting:
+      confidence_level: 0.95   # 95% confidence
+      polynomial_degree: 2     # Quadratic fit
+    
+    # Method 3: MAC-frequency combined
+    mac_frequency:
+      mac_threshold: 0.6       # Minimum MAC
+      freq_std_threshold: 1.5  # Frequency deviation
+  
+  # Expected mode configurations - CUSTOMIZE FOR YOUR BRIDGE
+  # These represent expected mode shapes for comparison
+  mode_configs:
+    # First bending mode group  
+    '1': {'indices': [0, 1, 2], 'labels': ['1.1', '1.2', '1.3']}
+    # First torsional mode group
+    '2': {'indices': [3, 4, 5], 'labels': ['2.1', '2.2', '2.3']}
+    # Second bending mode group
+    '3': {'indices': [6, 7, 8], 'labels': ['3.1', '3.2', '3.3']}
+    # Higher order mode groups
+    '4': {'indices': [9, 10, 11], 'labels': ['4.1', '4.2', '4.3']}
+    '5': {'indices': [12, 13, 14], 'labels': ['5.1', '5.2', '5.3']}
+    '6': {'indices': [15, 16, 17], 'labels': ['6.1', '6.2', '6.3']}
+
+# Processing Options
+processing:
+  # Segment range to process (adjust for your dataset)
+  segment_range:
+    start: 1                   # First segment number
+    end: 100                   # Last segment number
+  
+  # Parallel processing
+  use_parallel: false          # Enable for large datasets
+  max_workers: 4              # Number of parallel workers
+  
+  # Logging
+  log_level: "INFO"           # DEBUG, INFO, WARNING, ERROR
+
+# Data Format Specifications
+data_format:
+  # Expected pickle file structure
+  pickle_structure:
+    required_keys: ['accelerations', 'metadata']
+    accelerations_type: 'DataFrame'
+    metadata_keys: ['tag_columns']
+  
+  # Filename format
+  filename_datetime_format: '%Y%m%d%H%M%S'
+  filename_pattern: '.*segment\d+_\d{14}_\d{14}\.pickle$'

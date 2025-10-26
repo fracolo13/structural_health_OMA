@@ -1,0 +1,182 @@
+# Structural Health Monitoring Workflow Configuration
+
+# Project Information
+project:
+  name: "structural_health_monitoring"
+  description: "Automated structural health monitoring analysis workflow"
+  version: "1.0.0"
+
+# File Paths Configuration
+paths:
+  # Input data directory containing raw acceleration data files (.pickle format)
+  input_data_dir: "data/raw"
+  
+  # Output directories for processed data
+  filtered_data_dir: "data/filtered"
+  processed_data_dir: "data/processed"  
+  analysis_output_dir: "results"
+  
+  # Relative paths from project root
+  use_relative_paths: true
+
+# Data Quality Control Parameters
+quality_control:
+  # Amplitude thresholds for initial channel filtering (mean values)
+  mean_threshold:
+    lower: -1.1
+    upper: -0.9
+  
+  # Quality control amplitude bounds for data cleaning
+  amplitude_bounds:
+    lower: -1.1
+    upper: -0.9
+  
+  # Required channel names (customize for your sensor setup)
+  required_channels: ['p_1_1', 'p_1_5', 'p_1_7', 'p_1_11']
+  
+  # Data cleaning parameters
+  cleaning:
+    min_shift_duration: 10  # minimum samples for systematic shift detection
+    max_peak_duration: 5   # maximum samples for signal peak detection
+    edge_buffer_ratio: 0.05  # fraction of data length to consider as edge (reduced for synthetic data)
+    drift_threshold: 0.1   # slope threshold for drift detection (relaxed for synthetic data)
+  
+  # Window-based validation
+  validation:
+    window_size: '10S'      # time window for quality assessment
+    quality_threshold: 30   # minimum percentage of valid windows required (relaxed for synthetic data)
+
+# Signal Processing Parameters
+signal_processing:
+  sampling_frequency: 250   # Hz
+  
+  # Filter settings
+  filters:
+    highpass:
+      cutoff: 25           # Hz
+      order: 4
+    
+    bandpass:
+      lowcut: 40           # Hz
+      highcut: 70          # Hz  
+      order: 4
+
+# Operational Modal Analysis (OMA) Settings
+oma:
+  settings:
+    fs: 250
+    decimation_order: 1
+    min_percentage_mode_occurence: 0.2
+    
+    # FSDD Algorithm settings
+    fsdd:
+      name: "FSDD"
+      nxseg: 1024
+      method_SD: "cor"
+      pov: 0.5
+      maclim: 0.85
+    
+    # SSI-COV Algorithm settings  
+    ssicov:
+      name: "SSIcov"
+      method: "cov"
+      br: 100
+      ordmax: 100
+      orderin: 40
+
+  # Sensor geometry (customize for your structure)
+  geometry:
+    # Sensor names
+    sensor_names: ['p_1_1', 'p_1_3', 'p_1_5', 'p_1_7', 'p_1_9', 'p_1_11']
+    
+    # Sensor coordinates [x, y, z] in meters
+    sensor_coordinates:
+      - [-2.5, -1.25, 0]  # Sensor 1
+      - [0, -1.25, 0]     # Sensor 2  
+      - [2.5, -1.25, 0]   # Sensor 3
+      - [-2.5, 1.25, 0]   # Sensor 4
+      - [0, 1.25, 0]      # Sensor 5
+      - [2.5, 1.25, 0]    # Sensor 6
+    
+    # Sensor directions [x, y, z] (unit vectors)
+    sensor_directions:
+      - [0, 0, 1]  # All sensors measure vertical acceleration
+      - [0, 0, 1]
+      - [0, 0, 1] 
+      - [0, 0, 1]
+      - [0, 0, 1]
+      - [0, 0, 1]
+    
+    # Background geometry for visualization
+    bg_nodes:
+      - [-0.5, -0.5, 0]
+      - [-0.5, 2.5, 0]
+      - [2.5, 2.5, 0]  
+      - [2.5, -0.5, 0]
+    
+    bg_lines:
+      - [1, 2]
+      - [2, 3]
+      - [3, 4]
+      - [4, 1]
+
+# Modal Analysis Parameters
+modal_analysis:
+  # MAC (Modal Assurance Criterion) threshold
+  mac_threshold: 0.6
+  
+  # Maximum number of outliers to analyze in detail
+  max_outliers_to_analyze: 10
+  
+  # Outlier detection methods configuration
+  outlier_detection:
+    # Method 1: Standard deviation based
+    std_dev:
+      threshold: 2.0  # number of standard deviations
+    
+    # Method 2: Curve fitting with confidence intervals
+    curve_fitting:
+      confidence_level: 0.95
+      polynomial_degree: 2
+    
+    # Method 3: MAC-frequency combined analysis
+    mac_frequency:
+      mac_threshold: 0.6
+      freq_std_threshold: 1.5
+  
+  # Mode configurations (for mode shape comparison)
+  mode_configs:
+    '1': {'indices': [0, 1, 2], 'labels': ['1.1', '1.2', '1.3']}
+    '2': {'indices': [3, 4, 5], 'labels': ['2.1', '2.2', '2.3']}
+    '3': {'indices': [6, 7, 8], 'labels': ['3.1', '3.2', '3.3']}
+    '4': {'indices': [9, 10, 11], 'labels': ['4.1', '4.2', '4.3']}
+    '5': {'indices': [12, 13, 14], 'labels': ['5.1', '5.2', '5.3']}
+    '6': {'indices': [15, 16, 17], 'labels': ['6.1', '6.2', '6.3']}
+
+# Processing Options
+processing:
+  # Segment processing range
+  segment_range:
+    start: 1
+    end: 139
+  
+  # Parallel processing (if available)
+  use_parallel: false
+  max_workers: 4
+  
+  # Logging level
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+# Data Format Specifications
+data_format:
+  # Expected structure of input pickle files
+  pickle_structure:
+    required_keys: ['accelerations', 'metadata']
+    accelerations_type: 'DataFrame'  # pandas DataFrame
+    metadata_keys: ['tag_columns']
+  
+  # Expected datetime format in filenames
+  filename_datetime_format: '%Y%m%d%H%M%S'
+  
+  # Expected file naming pattern (regex)
+  filename_pattern: '.*segment\d+_\d{14}_\d{14}\.pickle$'

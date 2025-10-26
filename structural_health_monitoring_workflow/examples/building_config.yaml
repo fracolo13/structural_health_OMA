@@ -1,0 +1,159 @@
+# Example: Simple Building Monitoring Setup
+
+# This configuration is for a 4-sensor building monitoring system
+# with sensors at different floor levels
+
+# Project Information
+project:
+  name: "building_monitoring_simple"
+  description: "4-sensor building monitoring setup"
+  version: "1.0.0"
+
+# File Paths Configuration
+paths:
+  input_data_dir: "data/raw"
+  filtered_data_dir: "data/filtered"  
+  processed_data_dir: "data/processed"
+  analysis_output_dir: "results"
+  use_relative_paths: true
+
+# Data Quality Control Parameters
+quality_control:
+  # More relaxed thresholds for building monitoring
+  mean_threshold:
+    lower: -0.8
+    upper: -0.2
+  
+  amplitude_bounds:
+    lower: -0.8
+    upper: -0.2
+  
+  # Minimum required sensors
+  required_channels: ['floor_1', 'floor_2', 'floor_3', 'floor_4']
+  
+  cleaning:
+    min_shift_duration: 15     # Longer duration for building data
+    max_peak_duration: 8
+    edge_buffer_ratio: 0.3     # Larger edge buffer
+    drift_threshold: 0.005     # More sensitive to drift
+  
+  validation:
+    window_size: '20S'         # Longer validation windows
+    quality_threshold: 75      # Slightly lower threshold
+
+# Signal Processing
+signal_processing:
+  sampling_frequency: 100      # Lower sampling rate typical for buildings
+  
+  filters:
+    highpass:
+      cutoff: 10               # Lower cutoff for building frequencies
+      order: 4
+    
+    bandpass:
+      lowcut: 15               # Building frequency range
+      highcut: 40
+      order: 4
+
+# OMA Settings  
+oma:
+  settings:
+    fs: 100                    # Match sampling frequency
+    decimation_order: 1
+    min_percentage_mode_occurence: 0.15  # Lower threshold for buildings
+    
+    ssicov:
+      name: "SSIcov"
+      method: "cov"
+      br: 50                   # Smaller block rows for lower frequencies
+      ordmax: 50               # Lower model orders
+      orderin: 20
+
+  # Building geometry - 4 floors, sensors at each level
+  geometry:
+    sensor_names: ['floor_1', 'floor_2', 'floor_3', 'floor_4']
+    
+    # Coordinates: ground level to top floor
+    sensor_coordinates:
+      - [0.0, 0.0, 3.5]        # 1st floor
+      - [0.0, 0.0, 7.0]        # 2nd floor
+      - [0.0, 0.0, 10.5]       # 3rd floor  
+      - [0.0, 0.0, 14.0]       # 4th floor
+    
+    # All measure horizontal acceleration (x-direction)
+    sensor_directions:
+      - [1, 0, 0]
+      - [1, 0, 0]
+      - [1, 0, 0]
+      - [1, 0, 0]
+    
+    # Simple building outline
+    bg_nodes:
+      - [-5.0, -5.0, 0]
+      - [-5.0, 5.0, 0]
+      - [5.0, 5.0, 0]
+      - [5.0, -5.0, 0]
+      - [-5.0, -5.0, 14.0]     # Top level
+      - [-5.0, 5.0, 14.0]
+      - [5.0, 5.0, 14.0]
+      - [5.0, -5.0, 14.0]
+    
+    bg_lines:
+      - [1, 2]                 # Bottom edges
+      - [2, 3]
+      - [3, 4]
+      - [4, 1]
+      - [5, 6]                 # Top edges
+      - [6, 7]
+      - [7, 8]
+      - [8, 5]
+      - [1, 5]                 # Vertical edges
+      - [2, 6]
+      - [3, 7]
+      - [4, 8]
+
+# Modal Analysis for Building
+modal_analysis:
+  mac_threshold: 0.5           # Lower MAC threshold for buildings
+  max_outliers_to_analyze: 15  # More outliers due to variability
+  
+  outlier_detection:
+    std_dev:
+      threshold: 2.5           # More tolerant threshold
+    
+    curve_fitting:
+      confidence_level: 0.90   # Lower confidence level
+      polynomial_degree: 1     # Linear fit for simpler trends
+    
+    mac_frequency:
+      mac_threshold: 0.5
+      freq_std_threshold: 2.0  # More tolerant frequency deviation
+  
+  # Building mode configurations
+  # Typically: bending modes in x, y directions, torsional modes
+  mode_configs:
+    '1': {'indices': [0], 'labels': ['1st_bending_x']}
+    '2': {'indices': [1], 'labels': ['1st_bending_y']} 
+    '3': {'indices': [2], 'labels': ['1st_torsion']}
+    '4': {'indices': [3], 'labels': ['2nd_bending_x']}
+
+# Processing
+processing:
+  segment_range:
+    start: 1
+    end: 50                    # Smaller dataset
+  
+  use_parallel: true           # Enable for efficiency
+  max_workers: 2
+  
+  log_level: "INFO"
+
+# Data format (same as standard)
+data_format:
+  pickle_structure:
+    required_keys: ['accelerations', 'metadata']
+    accelerations_type: 'DataFrame'
+    metadata_keys: ['tag_columns']
+  
+  filename_datetime_format: '%Y%m%d%H%M%S'
+  filename_pattern: '.*segment\d+_\d{14}_\d{14}\.pickle$'
